@@ -2742,6 +2742,7 @@ void initServer(void) {
     }
 
     createSharedObjects();
+#ifndef REDIS_EMBEDDED
     adjustOpenFilesLimit();
     const char *clk_msg = monotonicInit();
     serverLog(LL_NOTICE, "monotonic clock: %s", clk_msg);
@@ -2752,6 +2753,7 @@ void initServer(void) {
             strerror(errno));
         exit(1);
     }
+#endif
     server.db = zmalloc(sizeof(redisDb)*server.dbnum);
 
     /* Create the Redis databases, and initialize other internal state. */
@@ -2836,6 +2838,7 @@ void initServer(void) {
     server.acl_info.user_auth_failures = 0;
     server.acl_info.invalid_channel_accesses = 0;
 
+#ifndef REDIS_EMBEDDED
     /* Create the timer callback, this is our way to process many background
      * operations incrementally, like clients timeout, eviction of unaccessed
      * expired keys and so forth. */
@@ -2856,6 +2859,7 @@ void initServer(void) {
      * before loading persistence since it is used by processEventsWhileBlocked. */
     aeSetBeforeSleepProc(server.el,beforeSleep);
     aeSetAfterSleepProc(server.el,afterSleep);
+#endif
 
     /* 32 bit instances are limited to 4GB of address space, so if there is
      * no explicit limit in the user provided configuration we set a limit
@@ -2872,6 +2876,7 @@ void initServer(void) {
         serverPanic("Functions initialization failed, check the server logs.");
         exit(1);
     }
+
     slowlogInit();
     latencyMonitorInit();
 
@@ -2950,10 +2955,12 @@ void initListeners(void) {
        listen_fds += listener->count;
     }
 
+#ifndef REDIS_EMBEDDED
     if (listen_fds == 0) {
         serverLog(LL_WARNING, "Configured to not listen anywhere, exiting.");
         exit(1);
     }
+#endif
 }
 
 /* Some steps in server initialization need to be done last (after modules
@@ -3650,6 +3657,7 @@ void call(client *c, int flags) {
      * processing of the command proc, the client is aware that it is being
      * re-processed. */
     if (reprocessing_command) c->flags |= CLIENT_REPROCESSING_COMMAND;
+
 
     monotime monotonic_start = 0;
     if (monotonicGetType() == MONOTONIC_CLOCK_HW)
@@ -6922,6 +6930,7 @@ redisTestProc *getTestProcByName(const char *name) {
 }
 #endif
 
+#ifndef REDIS_EMBEDDED
 int main(int argc, char **argv) {
     struct timeval tv;
     int j;
@@ -7259,5 +7268,6 @@ int main(int argc, char **argv) {
     aeDeleteEventLoop(server.el);
     return 0;
 }
+#endif /* REDIS_EMBEDDED */
 
 /* The End */

@@ -398,6 +398,21 @@ ifneq ($(strip $(PREV_FINAL_LDFLAGS)), $(strip $(FINAL_LDFLAGS)))
 .make-prerequisites: persist-settings
 endif
 
+# ---- Embedded Redis stuff ----
+EMBEDDED_REDIS_NAME=liberedis.so
+EMBEDDED_REDIS_OBJ=$(filter-out server.o,$(REDIS_SERVER_OBJ)) server-embedded.o eredis.o
+
+server-embedded.o: server.c
+	$(REDIS_CC) -c $(FINAL_CFLAGS) -DREDIS_EMBEDDED $^ -o $@
+
+$(EMBEDDED_REDIS_NAME): $(EMBEDDED_REDIS_OBJ)
+	$(REDIS_LD) -shared -o $@ $^ ../deps/hiredis/libhiredis.a ../deps/hdr_histogram/libhdrhistogram.a ../deps/fpconv/libfpconv.a ../deps/lua/src/liblua.a $(FINAL_LIBS)
+
+embedded:
+	$(MAKE) MALLOC="libc" CFLAGS="-fPIC -fpic" $(EMBEDDED_REDIS_NAME)
+
+# ---- End ---
+
 # redis-server
 $(REDIS_SERVER_NAME): $(REDIS_SERVER_OBJ)
 	$(REDIS_LD) -o $@ $^ ../deps/hiredis/libhiredis.a ../deps/lua/src/liblua.a ../deps/hdr_histogram/libhdrhistogram.a ../deps/fpconv/libfpconv.a $(FINAL_LIBS)
