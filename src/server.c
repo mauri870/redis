@@ -2558,9 +2558,11 @@ void makeThreadKillable(void) {
 void initServer(void) {
     int j;
 
+#ifndef REDIS_EMBEDDED
     signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
+#endif
     makeThreadKillable();
 
     if (server.syslog_enabled) {
@@ -2617,8 +2619,11 @@ void initServer(void) {
 
     createSharedObjects();
     adjustOpenFilesLimit();
+
+#ifndef REDIS_EMBEDDED
     const char *clk_msg = monotonicInit();
     serverLog(LL_NOTICE, "monotonic clock: %s", clk_msg);
+#endif
     server.el = aeCreateEventLoop(server.maxclients+CONFIG_FDSET_INCR);
     if (server.el == NULL) {
         serverLog(LL_WARNING,
@@ -2705,6 +2710,7 @@ void initServer(void) {
     server.acl_info.user_auth_failures = 0;
     server.acl_info.invalid_channel_accesses = 0;
 
+#ifndef REDIS_EMBEDDED
     /* Create the timer callback, this is our way to process many background
      * operations incrementally, like clients timeout, eviction of unaccessed
      * expired keys and so forth. */
@@ -2725,6 +2731,7 @@ void initServer(void) {
      * before loading persistence since it is used by processEventsWhileBlocked. */
     aeSetBeforeSleepProc(server.el,beforeSleep);
     aeSetAfterSleepProc(server.el,afterSleep);
+#endif
 
     /* 32 bit instances are limited to 4GB of address space, so if there is
      * no explicit limit in the user provided configuration we set a limit
@@ -2816,10 +2823,12 @@ void initListeners(void) {
        listen_fds += listener->count;
     }
 
+#ifndef REDIS_EMBEDDED
     if (listen_fds == 0) {
         serverLog(LL_WARNING, "Configured to not listen anywhere, exiting.");
         exit(1);
     }
+#endif
 }
 
 /* Some steps in server initialization need to be done last (after modules
@@ -3962,10 +3971,12 @@ int processCommand(client *c) {
      * before key eviction, after the last command was executed and consumed
      * some client output buffer memory. */
     evictClients();
+#ifndef REDIS_EMBEDDED
     if (server.current_client == NULL) {
         /* If we evicted ourself then abort processing the command */
         return C_ERR;
     }
+#endif
 
     /* Handle the maxmemory directive.
      *
@@ -7031,6 +7042,7 @@ redisTestProc *getTestProcByName(const char *name) {
 }
 #endif
 
+#ifndef REDIS_EMBEDDED
 int main(int argc, char **argv) {
     struct timeval tv;
     int j;
@@ -7361,5 +7373,6 @@ int main(int argc, char **argv) {
     aeDeleteEventLoop(server.el);
     return 0;
 }
+#endif /* REDIS_EMBEDDED */
 
 /* The End */

@@ -852,6 +852,7 @@ void configSetCommand(client *c) {
         /* We continue to make sure we redact all the configs */ 
         if (invalid_args) continue;
 
+#ifndef REDIS_EMBEDDED
         if (config->flags & IMMUTABLE_CONFIG ||
             (config->flags & PROTECTED_CONFIG && !allowProtectedAction(server.enable_protected_configs, c)))
         {
@@ -861,6 +862,7 @@ void configSetCommand(client *c) {
             invalid_args = 1;
             continue;
         }
+#endif
 
         if (server.loading && config->flags & DENY_LOADING_CONFIG) {
             /* Note: we don't abort the loop since we still want to handle redacting sensitive configs (above) */
