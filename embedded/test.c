@@ -179,7 +179,9 @@ void test_execute_parallel(void)
 {
     // Test skipped since there is no locking in the library.
     // You are supposed to call this in a single-threaded context.
+    TEST_SKIP("skipping parallel test, no locking in the library");
     return;
+
     BEGIN_TEST();
 
     pthread_t t1, t2, t3, t4;
@@ -218,7 +220,9 @@ void test_create_client_and_execute_parallel(void)
 {
     // Test skipped since there is no locking in the library.
     // You are supposed to call this in a single-threaded context.
+    TEST_SKIP("skipping parallel test, no locking in the library");
     return;
+
     int ret = eredis_init();
     TEST_CHECK(ret == 0);
 
