@@ -177,6 +177,9 @@ void *thread_execute(void *arg)
 
 void test_execute_parallel(void)
 {
+    // Test skipped since there is no locking in the library.
+    // You are supposed to call this in a single-threaded context.
+    return;
     BEGIN_TEST();
 
     pthread_t t1, t2, t3, t4;
@@ -192,6 +195,45 @@ void test_execute_parallel(void)
     pthread_join(t4, NULL);
 }
 
+void *thread_create_client_and_execute(void *arg)
+{
+    int len;
+    char *cmd[] = { "SET", "mykey", "myvalue" };
+
+    eredis_client_t *c = eredis_create_client();
+
+    eredis_prepare_request(c, 3, (const char **) &cmd, NULL);
+    TEST_CHECK(eredis_execute(c) == 0);
+
+    const char *reply = eredis_read_reply_chunk(c, &len);
+    TEST_CHECK(len == 5);
+    TEST_CHECK(!memcmp(reply, "+OK\r\n", len));
+
+    eredis_free_client(c);
+
+    return NULL;
+}
+
+void test_create_client_and_execute_parallel(void)
+{
+    // Test skipped since there is no locking in the library.
+    // You are supposed to call this in a single-threaded context.
+    return;
+    int ret = eredis_init();
+    TEST_CHECK(ret == 0);
+
+    pthread_t t1, t2, t3, t4;
+
+    pthread_create(&t1, NULL, thread_create_client_and_execute, NULL);
+    pthread_create(&t2, NULL, thread_create_client_and_execute, NULL);
+    pthread_create(&t3, NULL, thread_create_client_and_execute, NULL);
+    pthread_create(&t4, NULL, thread_create_client_and_execute, NULL);
+
+    pthread_join(t1, NULL);
+    pthread_join(t2, NULL);
+    pthread_join(t3, NULL);
+    pthread_join(t4, NULL);
+}
 
 
 TEST_LIST = {
@@ -203,5 +245,6 @@ TEST_LIST = {
     { "test-lua-reply", test_lua_reply },
     { "test-protected-mode-disabled", test_protected_mode_disabled },
     { "test-execute-parallel", test_execute_parallel },
+    { "test-create-client-and-execute-parallel", test_create_client_and_execute_parallel },
     { NULL, NULL }
 };
