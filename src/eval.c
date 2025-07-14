@@ -19,7 +19,7 @@
 #include <lauxlib.h>
 #include <lualib.h>
 #if defined(USE_JEMALLOC)
-#include <lstate.h>
+#include <lj_obj.h>
 #endif
 #include <ctype.h>
 #include <math.h>
@@ -263,7 +263,7 @@ void freeLuaScriptsSync(dict *lua_scripts, list *lua_scripts_lru_list, lua_State
 
 #if defined(USE_JEMALLOC)
     /* When lua is closed, destroy the previously used private tcache. */
-    void *ud = (global_State*)G(lua)->ud;
+    void *ud = G(lua)->allocd;  // LuaJIT: user data is in allocd
     unsigned int lua_tcache = (unsigned int)(uintptr_t)ud;
 #endif
 

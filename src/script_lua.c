@@ -14,6 +14,7 @@
 
 #include "script_lua.h"
 #include "fpconv_dtoa.h"
+#include "luajit_compat.h"
 
 #include "server.h"
 #include "sha1.h"
@@ -23,6 +24,7 @@
 #include "resp_parser.h"
 #include "version.h"
 #include <lauxlib.h>
+#include <lua.h>
 #include <lualib.h>
 #include <ctype.h>
 #include <math.h>
@@ -37,6 +39,8 @@ static char *libraries_allow_list[] = {
     "table",
     "struct",
     "os",
+    "jit", /* LuaJIT library */
+    "ffi", /* LuaJIT FFI library */
     NULL,
 };
 
@@ -1216,11 +1220,6 @@ static void luaLoadLib(lua_State *lua, const char *libname, lua_CFunction luafun
   lua_call(lua, 1, 0);
 }
 
-LUALIB_API int (luaopen_cjson) (lua_State *L);
-LUALIB_API int (luaopen_struct) (lua_State *L);
-LUALIB_API int (luaopen_cmsgpack) (lua_State *L);
-LUALIB_API int (luaopen_bit) (lua_State *L);
-
 static void luaLoadLibraries(lua_State *lua) {
     luaLoadLib(lua, "", luaopen_base);
     luaLoadLib(lua, LUA_TABLIBNAME, luaopen_table);
@@ -1228,10 +1227,12 @@ static void luaLoadLibraries(lua_State *lua) {
     luaLoadLib(lua, LUA_MATHLIBNAME, luaopen_math);
     luaLoadLib(lua, LUA_DBLIBNAME, luaopen_debug);
     luaLoadLib(lua, LUA_OSLIBNAME, luaopen_os);
+    luaLoadLib(lua, LUA_JITLIBNAME, luaopen_jit);
+    luaLoadLib(lua, LUA_FFILIBNAME, luaopen_ffi);
+    luaLoadLib(lua, "bit", luaopen_bit);
     luaLoadLib(lua, "cjson", luaopen_cjson);
     luaLoadLib(lua, "struct", luaopen_struct);
     luaLoadLib(lua, "cmsgpack", luaopen_cmsgpack);
-    luaLoadLib(lua, "bit", luaopen_bit);
 
 #if 0 /* Stuff that we don't load currently, for sandboxing concerns. */
     luaLoadLib(lua, LUA_LOADLIBNAME, luaopen_package);

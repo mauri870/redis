@@ -20,12 +20,10 @@
  */
 
 #include "functions.h"
+#include "luajit_compat.h"
 #include "script_lua.h"
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
 #if defined(USE_JEMALLOC)
-#include <lstate.h>
+#include <lj_obj.h>
 #endif
 
 #define LUA_ENGINE_NAME "LUA"
@@ -195,7 +193,7 @@ static void luaEngineFreeCtx(void *engine_ctx) {
     luaEngineCtx *lua_engine_ctx = engine_ctx;
 #if defined(USE_JEMALLOC)
     /* When lua is closed, destroy the previously used private tcache. */
-    void *ud = (global_State*)G(lua_engine_ctx->lua)->ud;
+    void *ud = G(lua_engine_ctx->lua)->allocd;
     unsigned int lua_tcache = (unsigned int)(uintptr_t)ud;
 #endif
 
